@@ -172,5 +172,68 @@ form?.addEventListener("submit", async (event) => {
   form.reset();
 });
 
+const lightbox = $("#lightbox");
+const galleryItems = $$(".gal-item");
+
+if (lightbox && galleryItems.length) {
+  const lbImg = $(".lb-img", lightbox);
+  const lbCaption = $(".lb-caption", lightbox);
+  const lbButtons = $$(".lb-btn", lightbox);
+  let current = 0;
+  let lastFocus = null;
+
+  const showPhoto = (index) => {
+    current = (index + galleryItems.length) % galleryItems.length;
+    const photo = $("img", galleryItems[current]);
+    lbImg.src = photo.src;
+    lbImg.alt = photo.alt;
+    lbCaption.textContent = `${current + 1} / ${galleryItems.length} · ${photo.alt}`;
+  };
+
+  const openLightbox = (index) => {
+    lastFocus = document.activeElement;
+    showPhoto(index);
+    lightbox.hidden = false;
+    document.body.classList.add("no-scroll");
+    $(".lb-close", lightbox).focus();
+  };
+
+  const closeLightbox = () => {
+    lightbox.hidden = true;
+    document.body.classList.remove("no-scroll");
+    lbImg.removeAttribute("src");
+    lastFocus?.focus();
+  };
+
+  galleryItems.forEach((item, index) => item.addEventListener("click", () => openLightbox(index)));
+  $(".lb-close", lightbox).addEventListener("click", closeLightbox);
+  $(".lb-prev", lightbox).addEventListener("click", () => showPhoto(current - 1));
+  $(".lb-next", lightbox).addEventListener("click", () => showPhoto(current + 1));
+
+  lightbox.addEventListener("click", (event) => {
+    if (event.target === lightbox) closeLightbox();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (lightbox.hidden) return;
+
+    if (event.key === "Escape") closeLightbox();
+    if (event.key === "ArrowLeft") showPhoto(current - 1);
+    if (event.key === "ArrowRight") showPhoto(current + 1);
+
+    if (event.key === "Tab") {
+      const first = lbButtons[0];
+      const last = lbButtons[lbButtons.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+  });
+}
+
 const year = $("#year");
 if (year) year.textContent = new Date().getFullYear();
